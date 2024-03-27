@@ -1,6 +1,5 @@
-# Doc Sprint 25/03
 
-## Testes em uma Máquina Virtual sem Google Chrome
+# Testes em uma Máquina Virtual sem Google Chrome
 
 Nesse primeiro momento, estudei a melhor forma de iniciar a aplicação testando em ambientes sem nenhuma configuração prévia, apenas instalando o python e as bibliotecas necessárias (sem google chrome).
 O seguinte script de teste foi baseado na [Referência de primeiro script da Documentação Selenium](https://www.selenium.dev/documentation/webdriver/getting_started/first_script/) com algumas modificações.
@@ -9,9 +8,9 @@ O seguinte script de teste foi baseado na [Referência de primeiro script da Doc
 
 <img src='screenshots/sem_webdriver-manager.png'>
 
-Mensagens de erro de configuração
+❌ Mensagens de erro de configuração
 
-Elementos encontrados e mensagem identificada!
+✅ Elementos encontrados e mensagem identificada!
 
 *De alguma forma inicia uma instancia do google chrome básica e consegue executar o script “””Talvez puxando pelo chromium do edge”””*
 
@@ -19,9 +18,9 @@ Elementos encontrados e mensagem identificada!
 
 <img src='screenshots/com_webdriver-manager.png'>
 
-Mensagens de erro de instalação de driver
+❌ Mensagens de erro de instalação de driver
 
-Não consegue iniciar uma instancia do navegador
+❌ Não consegue iniciar uma instancia do navegador
 
 *O webdriver-manager tenta identificar a versão do chrome instalada para buscar o driver correspondente porem quebra o fluxo durante a verificação por não encontrar*
 
