@@ -7,7 +7,7 @@ O seguinte script de teste foi baseado na [Referência de primeiro script da Doc
 
 ### Script de teste sem modificação
 
-![Untitled](selenium_env_tests/screenshots/sem_webdriver-manager.png)
+<img src='selenium_env_tests/screenshots/sem_webdriver-manager.png'>
 
 Mensagens de erro de configuração
 
@@ -17,7 +17,7 @@ Elementos encontrados e mensagem identificada!
 
 ### Script de teste utilizando webdriver-manager
 
-![Untitled](selenium_env_tests/screenshots/com_webdriver-manager.png)
+<img src='screenshots/com_webdriver-manager.png'>
 
 Mensagens de erro de instalação de driver
 
