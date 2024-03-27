@@ -21,7 +21,7 @@ load_dotenv()
 username = os.getenv("LINKEDIN_USERNAME")
 password = os.getenv("LINKEDIN_PASSWORD")
 # company_code = os.getenv('LINKEDIN_COMPANY_CODE')
-company_code = 101280644 # página de teste
+company_code = 94807383  # página de teste
 
 options = Options()
 
@@ -29,9 +29,14 @@ try:
     driver = webdriver.Chrome(
         service=Service(ChromeDriverManager().install()), options=options
     )
+    print("Iniciando com webdriver-manager")
 
 except Exception as e:
-    print(e)
+    if "'NoneType' object has no attribute 'split'" in str(e):
+        print("Chrome não instalado")
+        print("Iniciando sem webdriver-manager")
+    else:
+        print(str(e))
 
 
 if driver is None:
