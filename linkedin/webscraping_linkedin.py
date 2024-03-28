@@ -74,7 +74,7 @@ class ScraperLinkedin:
         "//div[contains(@class, 'artdeco-modal__actionbar')]//button[last()]"
     )
 
-    def __init__(self, email, passowrd, company_code):
+    def __init__(self, email, password, company_code):
         """
         Inicializa a instância da classe ScraperLinkedin
 
@@ -84,7 +84,7 @@ class ScraperLinkedin:
             company_code (str): código da página a ser extraído os relatórios.
         """
         self.email = email
-        self.password = passowrd
+        self.password = password
         self.company_code = company_code
         self.driver = self.start_driver()
 
