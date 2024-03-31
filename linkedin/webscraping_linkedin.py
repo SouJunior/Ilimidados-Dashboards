@@ -53,7 +53,7 @@ class ScraperLinkedin:
         close_competitors_modal_if_open(): Fecha o modal de competidores se estiver aberto.
     """
 
-    DOWNLOAD_PATH = os.path.join(os.getcwd(), "linkedin", "data", "raw")
+    DOWNLOAD_PATH = os.path.join(os.getcwd(), "linkedin", "data", "raw", "temp")
     URL_LOGIN = "https://www.linkedin.com/login"
     XPATH_LOGIN = '//*[@id="username"]'
     XPATH_PASSWORD = '//*[@id="password"]'
@@ -97,6 +97,9 @@ class ScraperLinkedin:
         """
         if not os.path.exists(self.DOWNLOAD_PATH):
             os.makedirs(self.DOWNLOAD_PATH)
+        else:
+            for file in os.listdir(self.DOWNLOAD_PATH):
+                os.remove(os.path.join(self.DOWNLOAD_PATH, file))
 
         options = Options()
 
@@ -172,9 +175,12 @@ class ScraperLinkedin:
         self.close_chat_if_open()
         return True
 
-    def extract_data(self) -> bool:
+    def extract_data(self, daterange: str = "d15") -> bool:
         """
         Inicia o loop para execução da extração dos dados.
+
+        Args:
+            daterange (str): intervalo de datas(d15, d30, d90, d365, custom_date, 1, 15, 30, 90, 365). Padrão d15.
 
         Returns:
             bool: Retorna True se os dados foram extraídos com sucesso e False caso contrário.
@@ -202,7 +208,19 @@ class ScraperLinkedin:
             d15, d30, d90, d365, custom_date = self.get_element(
                 xpath=self.XPATH_LI_DATERANGE, multiple=True, force_waiting=True
             )
-            d15.click()
+            daterange_map = {
+                "d15": d15,
+                "15": d15,
+                "d30": d30,
+                "30": d30,
+                "d90": d90,
+                "90": d90,
+                "d365": d365,
+                "365": d365,
+                "custom_date": custom_date,
+            }
+            daterange_element = daterange_map.get(daterange)
+            daterange_element.click()
 
             # fluxo correto
             # self.get_element(xpath=self.XPATH_BUTTON_EXPORT_MODAL).click()
@@ -231,7 +249,7 @@ class ScraperLinkedin:
     def close_competitors_modal_if_open(self) -> bool:
         """
         Fecha o modal de competidores se estiver aberto.
-        
+
         Returns:
             bool: Retorna True se o modal foi fechado com sucesso e False caso contrário.
         """
@@ -252,4 +270,4 @@ if __name__ == "__main__":
     company_code = 94807383  # página de teste
     scraper = ScraperLinkedin(username, password, company_code)
     scraper.login()
-    scraper.extract_data()
+    scraper.extract_data(daterange="15")
