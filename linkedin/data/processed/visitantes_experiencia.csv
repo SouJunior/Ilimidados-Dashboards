@@ -1,21 +1,21 @@
-Data,Nível de experiência,Total de visualizações
-01/16/2024,Iniciante,68788
-03/24/2024,Iniciante,37572
-01/16/2024,Sênior,25488
-03/24/2024,Sênior,12064
-01/16/2024,Treinamento,7485
-03/24/2024,Treinamento,4967
-01/16/2024,Gerente,2072
-01/16/2024,Diretor,1852
-01/16/2024,Proprietário,1410
-03/24/2024,Gerente,1320
-03/24/2024,Diretor,741
-01/16/2024,"Dirigente (CEO, COO, CFO, CMO)",646
-03/24/2024,Proprietário,473
-01/16/2024,Não remunerado,376
-01/16/2024,Parceiro,333
-03/24/2024,"Dirigente (CEO, COO, CFO, CMO)",280
-03/24/2024,Não remunerado,265
-03/24/2024,Parceiro,121
-01/16/2024,Vice-Presidente,117
-03/24/2024,Vice-Presidente,79
+"Date","Experience Level","Total Views"
+"2024-03-24","Iniciante","39345"
+"2024-03-24","Sênior","12473"
+"2024-03-24","Parceiro","134"
+"2024-03-24","Não remunerado","173"
+"2024-03-24","Dirigente (CEO, COO, CFO, CMO)","314"
+"2024-03-24","Proprietário","450"
+"2024-03-24","Diretor","863"
+"2024-03-24","Gerente","1346"
+"2024-03-24","Treinamento","3858"
+"2024-03-24","Vice-Presidente","111"
+"2024-01-16","Sênior","9849"
+"2024-01-16","Vice-Presidente","79"
+"2024-01-16","Parceiro","109"
+"2024-01-16","Não remunerado","127"
+"2024-01-16","Dirigente (CEO, COO, CFO, CMO)","241"
+"2024-01-16","Proprietário","348"
+"2024-01-16","Diretor","718"
+"2024-01-16","Gerente","1025"
+"2024-01-16","Treinamento","3015"
+"2024-01-16","Iniciante","30970"
