@@ -164,3 +164,4 @@ test*
 *.csv
 *.xls
 *.xlsx
+config
