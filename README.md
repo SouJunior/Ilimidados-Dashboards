@@ -4,7 +4,7 @@ Este é um projeto Python que realiza a extração de relatórios de estatístic
 
 ## Estrutura do Projeto
 
-- `linkedin`: Contém o módulo `webscraping_linkedin.py` que define a classe `ScraperLinkedin` e a pasta `data` com a estrutura de dados extraídos e tratados.
+- `linkedin`: Contém o módulo `webscraping_linkedin.py` que define a classe `ScraperLinkedin`, o arquivo `etl_linkedin.ipynb` que contém o fluxo de testes para o script de etl, a pasta `data` com a estrutura de dados extraídos crús e tratados.
 - `selenium_env_tests`: Contém os testes de inicialização e de download de driver do Selenium.
 - `app.py`: Arquivo principal que executa o fluxo do projeto.
 
