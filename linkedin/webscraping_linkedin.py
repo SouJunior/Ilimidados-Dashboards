@@ -39,6 +39,8 @@ class ScraperLinkedin:
         XPATH_BUTTON_EXPORT (str): XPath do botão para exportar os dados.
         XPATH_BUTTON_DATERANGE (str): XPath do botão para selecionar o intervalo de datas.
         XPATH_LI_DATERANGE (str): XPath dos multiplos itens de intervalo de datas.
+        XPATH_INPUT_RANGE_START: (str): XPath do input inicial de datas.
+        XPATH_INPUT_RANGE_END: (str): XPath do input final de datas.
         XPATH_BUTTON_EXPORT_MODAL (str): XPath do botão de exportação.
         email (str): email linkedin.
         password (str): password linkedin.
@@ -69,6 +71,8 @@ class ScraperLinkedin:
     XPATH_BUTTON_DATERANGE = (
         "//div[contains(@class, 'org-analytics__export-modal--content')]//button"
     )
+    XPATH_INPUT_RANGE_START = "//input[@name='rangeStart']"
+    XPATH_INPUT_RANGE_END = "//input[@name='rangeEnd']"
     XPATH_LI_DATERANGE = "//ul[contains(@class, 'member-analytics-addon-daterange-picker__daterange-options')]//li"
     XPATH_BUTTON_EXPORT_MODAL = (
         "//div[contains(@class, 'artdeco-modal__actionbar')]//button[last()]"
@@ -175,12 +179,15 @@ class ScraperLinkedin:
         self.close_chat_if_open()
         return True
 
-    def extract_data(self, daterange: str = "d15") -> bool:
+    def extract_data(
+        self, daterange: str = "d15", custom_daterange: list = ["dd/mm/yyyy"]
+    ) -> bool:
         """
         Inicia o loop para execução da extração dos dados.
 
         Args:
             daterange (str): intervalo de datas(d15, d30, d90, d365, custom_date, 1, 15, 30, 90, 365). Padrão d15.
+            custom_daterange (list, optional): lista de datas customizadas. Padrão ['dd/mm/yyyy'].
 
         Returns:
             bool: Retorna True se os dados foram extraídos com sucesso e False caso contrário.
@@ -222,6 +229,8 @@ class ScraperLinkedin:
             daterange_element = daterange_map.get(daterange)
             daterange_element.click()
 
+            if daterange == "custom_date":
+                self.select_custom_daterange(custom_daterange)
             # fluxo correto
             # self.get_element(xpath=self.XPATH_BUTTON_EXPORT_MODAL).click()
 
@@ -229,10 +238,31 @@ class ScraperLinkedin:
             ActionChains(self.driver).move_to_element(
                 self.get_element(xpath=self.XPATH_BUTTON_EXPORT_MODAL)
             ).perform()
+            # fim fluxo de testes
 
             print("Fazendo download da extração de", url.split("/")[-2])
 
         return True
+
+    def select_custom_daterange(self, daterange: list) -> bool:
+        """
+        Preenche o intervalo de datas customizado.
+
+        Args:
+            daterange (list): lista de datas customizadas.
+
+        Returns:
+            bool: Retorna True se as datas customizadas foram preenchidas com sucesso e False caso contrário.
+        """
+        input_range_start = self.get_element(xpath=self.XPATH_INPUT_RANGE_START)
+        self.driver.execute_script("arguments[0].focus();", input_range_start)
+        self.driver.execute_script("arguments[0].value = '';", input_range_start)
+        input_range_start.send_keys(daterange[0])
+
+        input_range_end = self.get_element(xpath=self.XPATH_INPUT_RANGE_END)
+        self.driver.execute_script("arguments[0].focus();", input_range_end)
+        self.driver.execute_script("arguments[0].value = '';", input_range_end)
+        input_range_end.send_keys(daterange[-1])
 
     def close_chat_if_open(self) -> bool:
         """
