@@ -170,6 +170,12 @@ class ScraperLinkedin:
             return False
 
     def login(self) -> bool:
+        """
+        Realiza o login no LinkedIn e certifica que o chat está fechado para evitar conflitos.
+
+        Returns:
+            bool: Retorna True se o login foi realizado com sucesso.
+        """
         self.driver.get(self.URL_LOGIN)
         self.get_element(xpath=self.XPATH_LOGIN, force_waiting=True).send_keys(
             self.email
