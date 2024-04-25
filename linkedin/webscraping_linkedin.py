@@ -180,7 +180,7 @@ class ScraperLinkedin:
         return True
 
     def extract_data(
-        self, daterange: str = "d15", custom_daterange: list = ["dd/mm/yyyy"]
+        self, daterange: str = "d365", custom_daterange: list = ["dd/mm/yyyy"]
     ) -> bool:
         """
         Inicia o loop para execução da extração dos dados.
