@@ -160,8 +160,4 @@ cython_debug/
 #.idea/
 
 *.exe
-test*
-*.csv
-*.xls
-*.xlsx
-config
+*.ipynb
