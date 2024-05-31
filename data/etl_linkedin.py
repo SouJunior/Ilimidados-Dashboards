@@ -164,23 +164,23 @@ class EtlLinkedin:
                 "Date",
                 "Impressions (organic)",
                 "Impressions (sponsored)",
-                "Impressions",
+                "Impressions (total)",
                 "Unique impressions (organic)",
                 "Clicks (organic)",
                 "Clicks (sponsored)",
-                "Clicks",
+                "Clicks (total)",
                 "Reactions (organic)",
                 "Reactions (sponsored)",
-                "Reactions",
+                "Reactions (total)",
                 "Comments (organic)",
                 "Comments (sponsored)",
-                "Comments",
+                "Comments (total)",
                 "Shares (organic)",
                 "Shares (sponsored)",
-                "Shares",
+                "Shares (total)",
                 "Engagement rate (organic)",
                 "Engagement rate (sponsored)",
-                "Engagement rate",
+                "Engagement rate (total)",
             ],
             "content_posts": [
                 "Post Title",
@@ -362,20 +362,20 @@ class EtlLinkedin:
         df = dataframe["df"][
             [
                 "Date",
-                "Impressions",
-                "Clicks",
-                "Reactions",
-                "Comments",
-                "Shares",
-                "Engagement rate",
+                "Impressions (total)",
+                "Clicks (total)",
+                "Reactions (total)",
+                "Comments (total)",
+                "Shares (total)",
+                "Engagement rate (total)",
                 "Extraction Range",
             ]
         ]
 
-        df["Reactions (positive)"] = df["Reactions"][df["Reactions"] >= 0]
-        df["Comments (positive)"] = df["Comments"][df["Comments"] >= 0]
-        df["Shares (positive)"] = df["Shares"][df["Shares"] >= 0]
-        df["Clicks (positive)"] = df["Clicks"][df["Clicks"] >= 0]
+        df["Reactions (positive)"] = df["Reactions (total)"][df["Reactions (total)"] >= 0]
+        df["Comments (positive)"] = df["Comments (total)"][df["Comments (total)"] >= 0]
+        df["Shares (positive)"] = df["Shares (total)"][df["Shares (total)"] >= 0]
+        df["Clicks (positive)"] = df["Clicks (total)"][df["Clicks (total)"] >= 0]
 
         df["Reactions (positive)"] = df["Reactions (positive)"].fillna(0)
         df["Comments (positive)"] = df["Comments (positive)"].fillna(0)
@@ -397,55 +397,55 @@ class EtlLinkedin:
             df["Clicks (positive)"].rolling(window=window).mean()
         )
 
-        df["Reactions"] = df.apply(
+        df["Reactions (total)"] = df.apply(
             lambda row: (
                 row["Reactions (moving average)"]
-                if row["Reactions"] < 0
-                else row["Reactions"]
+                if row["Reactions (total)"] < 0
+                else row["Reactions (total)"]
             ),
             axis=1,
         )
 
-        df["Comments"] = df.apply(
+        df["Comments (total)"] = df.apply(
             lambda row: (
                 row["Comments (moving average)"]
-                if row["Comments"] < 0
-                else row["Comments"]
+                if row["Comments (total)"] < 0
+                else row["Comments (total)"]
             ),
             axis=1,
         )
 
-        df["Shares"] = df.apply(
+        df["Shares (total)"] = df.apply(
             lambda row: (
-                row["Shares (moving average)"] if row["Shares"] < 0 else row["Shares"]
+                row["Shares (moving average)"] if row["Shares (total)"] < 0 else row["Shares (total)"]
             ),
             axis=1,
         )
 
-        df["Clicks"] = df.apply(
+        df["Clicks (total)"] = df.apply(
             lambda row: (
-                row["Clicks (moving average)"] if row["Clicks"] < 0 else row["Clicks"]
+                row["Clicks (moving average)"] if row["Clicks (total)"] < 0 else row["Clicks (total)"]
             ),
             axis=1,
         )
 
-        df["Engagement Rate"] = df.apply(
+        df["Engagement Rate (total)"] = df.apply(
             lambda row: (
-                row["Reactions"] + row["Comments"] + row["Clicks"] + row["Shares"]
+                row["Reactions (total)"] + row["Comments (total)"] + row["Clicks (total)"] + row["Shares (total)"]
             )
-            / row["Impressions"],
+            / row["Impressions (total)"],
             axis=1,
         )
 
         dataframe["df"] = df[
             [
                 "Date",
-                "Impressions",
-                "Clicks",
-                "Reactions",
-                "Comments",
-                "Shares",
-                "Engagement Rate",
+                "Impressions (total)",
+                "Clicks (total)",
+                "Reactions (total)",
+                "Comments (total)",
+                "Shares (total)",
+                "Engagement Rate (total)",
                 "Extraction Range",
             ]
         ]
