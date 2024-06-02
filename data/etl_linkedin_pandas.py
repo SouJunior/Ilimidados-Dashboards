@@ -690,11 +690,16 @@ def main():
     raw_directory = "data/linkedin/raw"
     clean_directory = "data/linkedin/clean"
 
+    # temp
+    # delete clean directory
+    os.system(f"del {clean_directory} /S /Q")
+
     etl = EtlLinkedin(raw_directory, clean_directory)
     data = etl.extract_data()
     data = etl.transform_data(data)
     etl.load_to_clean(data)
 
+    #TODO: Não ler arquivos, usar os dataframes em memória
     etl.concatenate_monthly_files(clean_directory)
 
     months_data = etl.read_clean_months(clean_directory)
