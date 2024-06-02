@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import csv
+import re
 
 import warnings
 
@@ -372,7 +373,9 @@ class EtlLinkedin:
             ]
         ]
 
-        df["Reactions (positive)"] = df["Reactions (total)"][df["Reactions (total)"] >= 0]
+        df["Reactions (positive)"] = df["Reactions (total)"][
+            df["Reactions (total)"] >= 0
+        ]
         df["Comments (positive)"] = df["Comments (total)"][df["Comments (total)"] >= 0]
         df["Shares (positive)"] = df["Shares (total)"][df["Shares (total)"] >= 0]
         df["Clicks (positive)"] = df["Clicks (total)"][df["Clicks (total)"] >= 0]
@@ -417,21 +420,28 @@ class EtlLinkedin:
 
         df["Shares (total)"] = df.apply(
             lambda row: (
-                row["Shares (moving average)"] if row["Shares (total)"] < 0 else row["Shares (total)"]
+                row["Shares (moving average)"]
+                if row["Shares (total)"] < 0
+                else row["Shares (total)"]
             ),
             axis=1,
         )
 
         df["Clicks (total)"] = df.apply(
             lambda row: (
-                row["Clicks (moving average)"] if row["Clicks (total)"] < 0 else row["Clicks (total)"]
+                row["Clicks (moving average)"]
+                if row["Clicks (total)"] < 0
+                else row["Clicks (total)"]
             ),
             axis=1,
         )
 
         df["Engagement Rate (total)"] = df.apply(
             lambda row: (
-                row["Reactions (total)"] + row["Comments (total)"] + row["Clicks (total)"] + row["Shares (total)"]
+                row["Reactions (total)"]
+                + row["Comments (total)"]
+                + row["Clicks (total)"]
+                + row["Shares (total)"]
             )
             / row["Impressions (total)"],
             axis=1,
@@ -502,160 +512,63 @@ class EtlLinkedin:
 
         return 1
 
-    def read_clean_months(self, clean_directory):
+    def concatenate_monthly_dataframes(self, data):
         """
-        Detecta e retorna uma lista de arquivos limpos a serem concatenados.
+        Agrupa e concatena os DataFrames extraídos por mês.
 
         Parâmetros:
-        clean_directory (str): Diretório contendo os dados limpos.
+        data (list): Lista de dicionários contendo os dados extraídos.
 
         Retorno:
-        dict: Dicionário de listas de arquivos a serem concatenados, organizados por categoria.
+        dict: Dicionário com os DataFrames concatenados, categoria e diretório de saída.
         """
-        files_to_concat = {
-            "competitor": [],
-            "content_metrics": [],
-            "content_posts": [],
-            "followers_new": [],
-            "followers_location": [],
-            "followers_function": [],
-            "followers_experience": [],
-            "followers_industry": [],
-            "followers_company_size": [],
-            "visitors_metrics": [],
-            "visitors_location": [],
-            "visitors_function": [],
-            "visitors_experience": [],
-            "visitors_industry": [],
-            "visitors_company_size": [],
-        }
+        grouped_data_month = {}
 
-        for category in os.listdir(clean_directory):
-            category_path = os.path.join(clean_directory, category)
+        for dataframe in data:
+            year_month = "_".join(dataframe["extraction_period"].split("-")[:2])
+            tag_month = f"{year_month}_{dataframe['dataframe_name']}"
 
-            for year in os.listdir(category_path):
+            if tag_month not in grouped_data_month:
+                grouped_data_month[tag_month] = {
+                    "category": dataframe["dataframe_name"],
+                    "export_dir": dataframe["dir"].replace("raw", "clean"),
+                    "dfs": [],
+                }
 
-                year_path = os.path.join(category_path, year)
+            grouped_data_month[tag_month]["dfs"].append(dataframe["df"])
 
-                for month in os.listdir(year_path):
+        for tag_month, grouped_data in grouped_data_month.items():
+            grouped_data_month[tag_month]["concatenated_df"] = pd.concat(
+                grouped_data["dfs"]
+            )
 
-                    month_path = os.path.join(year_path, month)
+        return grouped_data_month
 
-                    monthly_files = os.listdir(month_path)
-
-                    if not monthly_files:
-
-                        continue
-
-                    for file in monthly_files:
-                        if file.startswith("month_"):
-                            file_category = file[6:-4]
-                            files_to_concat[file_category].append(
-                                os.path.join(month_path, file)
-                            )
-
-        return files_to_concat
-
-    def concatenate_dataframes(self, files):
+    def export_dataframes(self, data, file_prefix):
         """
-        Concatena uma lista de arquivos CSV em um único DataFrame.
+        Exporta dataframes concatenados para um arquivo CSV.
 
         Parâmetros:
-        files (list): Lista de caminhos para os arquivos CSV.
-
-        Retorno:
-        DataFrame: DataFrame concatenado.
-        """
-        dataframes = [pd.read_csv(file) for file in files]
-        concatenated_df = pd.concat(dataframes, ignore_index=True)
-        return concatenated_df
-
-    def export_concatenated_df(self, df, category, output_directory, export_type):
-        """
-        Exporta um DataFrame concatenado para um arquivo CSV.
-
-        Parâmetros:
-        df (DataFrame): DataFrame a ser exportado.
-        category (str): Categoria do DataFrame.
-        output_directory (str): Diretório de saída para o arquivo CSV.
-        export_type (str): Tipo de exportação (e.g., 'month', 'clean').
+        data (dict): Dicionário com os DataFrames concatenados.
+        file_prefix (str): Tipo de exportação (e.g., 'month', 'clean').
 
         Retorno:
         int: Retorna 1 se a exportação for bem-sucedida.
         """
-        if os.path.exists(output_directory) == False:
-            os.makedirs(output_directory)
+        for key, dataframe in data.items():
+            export_dir = dataframe["export_dir"]
+            export_filename = f"{file_prefix}_{dataframe['category']}.csv"
 
-        full_path = os.path.join(output_directory, f"{export_type}_{category}.csv")
-        df.to_csv(full_path, index=False, quoting=csv.QUOTE_ALL)
+            if os.path.exists(export_dir) == False:
+                os.makedirs(export_dir)
+
+            full_path = os.path.join(export_dir, export_filename)
+            dataframe["concatenated_df"].to_csv(
+                full_path, index=False, quoting=csv.QUOTE_ALL
+            )
         return 1
 
-    def concatenate_monthly_files(self, clean_directory):
-        """
-        Concatena os arquivos mensais limpos em arquivos únicos por categoria.
-
-        Parâmetros:
-        clean_directory (str): Diretório contendo os dados limpos.
-
-        Retorno:
-        int: Retorna 1 se a concatenação for bem-sucedida.
-        """
-        category_keys = {
-            "Concorrentes": ["competitor"],
-            "Conteúdo": ["content_metrics", "content_posts"],
-            "Seguidores": [
-                "followers_new",
-                "followers_location",
-                "followers_function",
-                "followers_experience",
-                "followers_industry",
-                "followers_company_size",
-            ],
-            "Visitantes": [
-                "visitors_metrics",
-                "visitors_location",
-                "visitors_function",
-                "visitors_experience",
-                "visitors_industry",
-                "visitors_company_size",
-            ],
-        }
-
-        for category in os.listdir(clean_directory):
-
-            category_path = os.path.join(clean_directory, category)
-
-            for year in os.listdir(category_path):
-
-                year_path = os.path.join(category_path, year)
-
-                for month in os.listdir(year_path):
-
-                    path_month = os.path.join(year_path, month)
-
-                    monthly_files = os.listdir(path_month)
-
-                    if not monthly_files:
-
-                        continue
-
-                    category_files = category_keys[category]
-                    for category_file in category_files:
-                        files_to_process = [
-                            os.path.join(path_month, file)
-                            for file in os.listdir(path_month)
-                            if file.startswith(category_file)
-                        ]
-                        concatenated_df = self.concatenate_dataframes(files_to_process)
-                        self.export_concatenated_df(
-                            df=concatenated_df,
-                            category=category_file,
-                            output_directory=path_month,
-                            export_type="month",
-                        )
-        return 1
-
-    def concatenate_all_periods(self, clean_data):
+    def concatenate_category_dataframes(self, data):
         """
         Concatena todos os arquivos concatenados mensalmente em arquivos únicos por categoria.
 
@@ -665,21 +578,30 @@ class EtlLinkedin:
         Retorno:
         int: Retorna 1 se a concatenação for bem-sucedida.
         """
-        for category, files in clean_data.items():
-            concatenated_df = self.concatenate_dataframes(files)
+        grouped_data_category = {}
 
-            split_path = files[0].split("clean")
-            category_file = split_path[1].split("\\")[-1][6:-4]
-            final_path = os.path.join(split_path[0], "clean", "Concatenated")
+        for key, dataframe in data.items():
+            if dataframe["category"] not in grouped_data_category:
+                grouped_data_category[dataframe["category"]] = {
+                    "category": dataframe["category"],
+                    "export_dir": re.sub(
+                        r"(clean)[\\/].*",
+                        r"\1/concatenated_dataframes",
+                        dataframe["export_dir"],
+                    ),
+                    "dfs": [],
+                }
 
-            self.export_concatenated_df(
-                df=concatenated_df,
-                category=category_file,
-                output_directory=final_path,
-                export_type="clean",
+            grouped_data_category[dataframe["category"]]["dfs"].append(
+                dataframe["concatenated_df"]
             )
 
-        return 1
+        for category, grouped_data in grouped_data_category.items():
+            grouped_data_category[category]["concatenated_df"] = pd.concat(
+                grouped_data["dfs"]
+            )
+
+        return grouped_data_category
 
 
 def main():
@@ -692,18 +614,18 @@ def main():
 
     # temp
     # delete clean directory
-    os.system(f"del {clean_directory} /S /Q")
-
     etl = EtlLinkedin(raw_directory, clean_directory)
     data = etl.extract_data()
     data = etl.transform_data(data)
     etl.load_to_clean(data)
 
-    #TODO: Não ler arquivos, usar os dataframes em memória
-    etl.concatenate_monthly_files(clean_directory)
+    concatenated_monthly_dataframes = etl.concatenate_monthly_dataframes(data)
+    etl.export_dataframes(concatenated_monthly_dataframes, file_prefix="month")
 
-    months_data = etl.read_clean_months(clean_directory)
-    etl.concatenate_all_periods(months_data)
+    concatenated_category_dataframes = etl.concatenate_category_dataframes(
+        concatenated_monthly_dataframes
+    )
+    etl.export_dataframes(concatenated_category_dataframes, file_prefix="all_extractions")
 
 
 if __name__ == "__main__":
