@@ -1,10 +1,11 @@
 import polars as pl
 import os
-import csv
+import re
 
 # import warnings
 
 # warnings.simplefilter("ignore")
+
 
 class EtlLinkedinPolars:
     """
@@ -127,9 +128,7 @@ class EtlLinkedinPolars:
             df = pl.read_excel(
                 source=file["file_path"],
                 sheet_id=sheet["sheet_pos"],
-                read_options={
-                    "skip_rows": sheet["skiprows"]
-                },
+                read_options={"skip_rows": sheet["skiprows"]},
             )
 
             if file["category"] == "content":
@@ -160,7 +159,7 @@ class EtlLinkedinPolars:
         data = [obj for file in files for obj in self.read_excel_file(file)]
         return data
 
-    def translate_cols(self, dataframe, translated_columns):
+    def translate_cols(self, dataframe):
         """
         Traduza os nomes das colunas de um DataFrame para o inglês.
 
@@ -170,8 +169,104 @@ class EtlLinkedinPolars:
         Retorno:
         dict: O mesmo dicionário com os nomes das colunas traduzidos.
         """
+        translated_columns = {
+            "content_metrics": [
+                "Date",
+                "Impressions (organic)",
+                "Impressions (sponsored)",
+                "Impressions (total)",
+                "Unique impressions (organic)",
+                "Clicks (organic)",
+                "Clicks (sponsored)",
+                "Clicks (total)",
+                "Reactions (organic)",
+                "Reactions (sponsored)",
+                "Reactions (total)",
+                "Comments (organic)",
+                "Comments (sponsored)",
+                "Comments (total)",
+                "Shares (organic)",
+                "Shares (sponsored)",
+                "Shares (total)",
+                "Engagement rate (organic)",
+                "Engagement rate (sponsored)",
+                "Engagement rate (total)",
+            ],
+            "content_posts": [
+                "Post Title",
+                "Post Link",
+                "Post Type",
+                "Campaign Name",
+                "Published by",
+                "Date",
+                "Campaign Start Date",
+                "Campaign End Date",
+                "Audience",
+                "Impressions",
+                "Views (excluding off-site video views)",
+                "Off-site Views",
+                "Clicks",
+                "Click-Through Rate (CTR)",
+                "Likes",
+                "Comments",
+                "Shares",
+                "Followers",
+                "Engagement Rate",
+                "Content Type",
+            ],
+            "followers_new": [
+                "Date",
+                "Followers Sponsored",
+                "Followers Organic",
+                "Total Followers",
+            ],
+            "followers_location": ["Location", "Total Followers"],
+            "followers_function": ["Function", "Total Followers"],
+            "followers_experience": ["Experience Level", "Total Followers"],
+            "followers_industry": ["Industry", "Total Followers"],
+            "followers_company_size": ["Company Size", "Total Followers"],
+            "visitors_metrics": [
+                "Date",
+                "Page Views Overview (Desktop)",
+                "Page Views Overview (Mobile Devices)",
+                "Page Views Overview (Total)",
+                "Unique Visitors Overview (Desktop)",
+                "Unique Visitors Overview (Mobile Devices)",
+                "Unique Visitors Overview (Total)",
+                "Page Views Day by Day (Desktop)",
+                "Page Views Day by Day (Mobile Devices)",
+                "Page Views Day by Day (Total)",
+                "Unique Visitors Day by Day (Desktop)",
+                "Unique Visitors Day by Day (Mobile Devices)",
+                "Unique Visitors Day by Day (Total)",
+                "Page Views Jobs (Desktop)",
+                "Page Views Jobs (Mobile Devices)",
+                "Page Views Jobs (Total)",
+                "Unique Visitors Jobs (Desktop)",
+                "Unique Visitors Jobs (Mobile Devices)",
+                "Unique Visitors Jobs (Total)",
+                "Total Page Views (Desktop)",
+                "Total Page Views (Mobile Devices)",
+                "Total Page Views (Total)",
+                "Total Unique Visitors (Desktop)",
+                "Total Unique Visitors (Mobile Devices)",
+                "Total Unique Visitors (Total)",
+            ],
+            "visitors_location": ["Location", "Total Views"],
+            "visitors_function": ["Function", "Total Views"],
+            "visitors_experience": ["Experience Level", "Total Views"],
+            "visitors_industry": ["Industry", "Total Views"],
+            "visitors_company_size": ["Company Size", "Total Views"],
+            "competitor": [
+                "Page",
+                "Total Followers",
+                "New Followers",
+                "Total Post Engagements",
+                "Total Posts",
+            ],
+        }
 
-        dataframe["df"].columns = translated_columns
+        dataframe["df"].columns = translated_columns.get(dataframe["dataframe_name"])
         return dataframe
 
     def add_final_date(self, dataframe):
@@ -185,61 +280,67 @@ class EtlLinkedinPolars:
         dict: O mesmo dicionário com a data final adicionada.
         """
         map_months_period = {
-            "2023-Jan-1": "2023-01-15",
-            "2023-Jan-2": "2023-01-31",
-            "2023-Fev-1": "2023-02-15",
-            "2023-Fev-2": "2023-02-28",
-            "2023-Mar-1": "2023-03-15",
-            "2023-Mar-2": "2023-03-31",
-            "2023-Abr-1": "2023-04-15",
-            "2023-Abr-2": "2023-04-30",
-            "2023-Mai-1": "2023-05-15",
-            "2023-Mai-2": "2023-05-31",
-            "2023-Jun-1": "2023-06-15",
-            "2023-Jun-2": "2023-06-30",
-            "2023-Jul-1": "2023-07-15",
-            "2023-Jul-2": "2023-07-31",
-            "2023-Ago-1": "2023-08-15",
-            "2023-Ago-2": "2023-08-31",
-            "2023-Set-1": "2023-09-15",
-            "2023-Set-2": "2023-09-30",
-            "2023-Out-1": "2023-10-15",
-            "2023-Out-2": "2023-10-31",
-            "2023-Nov-1": "2023-11-15",
-            "2023-Nov-2": "2023-11-30",
-            "2023-Dez-1": "2023-12-15",
-            "2023-Dez-2": "2023-12-31",
-            "2024-Jan-1": "2024-01-15",
-            "2024-Jan-2": "2024-01-31",
-            "2024-Fev-1": "2024-02-15",
-            "2024-Fev-2": "2024-02-29",
-            "2024-Mar-1": "2024-03-15",
-            "2024-Mar-2": "2024-03-31",
-            "2024-Abr-1": "2024-04-15",
-            "2024-Abr-2": "2024-04-30",
-            "2024-Mai-1": "2024-05-15",
-            "2024-Mai-2": "2024-05-31",
-            "2024-Jun-1": "2024-06-15",
-            "2024-Jun-2": "2024-06-30",
-            "2024-Jul-1": "2024-07-15",
-            "2024-Jul-2": "2024-07-31",
-            "2024-Ago-1": "2024-08-15",
-            "2024-Ago-2": "2024-08-31",
-            "2024-Set-1": "2024-09-15",
-            "2024-Set-2": "2024-09-30",
-            "2024-Out-1": "2024-10-15",
-            "2024-Out-2": "2024-10-31",
-            "2024-Nov-1": "2024-11-15",
-            "2024-Nov-2": "2024-11-30",
-            "2024-Dez-1": "2024-12-15",
-            "2024-Dez-2": "2024-12-31",
+            "2023-Jan-1": "01/15/2023",
+            "2023-Jan-2": "01/31/2023",
+            "2023-Fev-1": "02/15/2023",
+            "2023-Fev-2": "02/28/2023",
+            "2023-Mar-1": "03/15/2023",
+            "2023-Mar-2": "03/31/2023",
+            "2023-Abr-1": "04/15/2023",
+            "2023-Abr-2": "04/30/2023",
+            "2023-Mai-1": "05/15/2023",
+            "2023-Mai-2": "05/31/2023",
+            "2023-Jun-1": "06/15/2023",
+            "2023-Jun-2": "06/30/2023",
+            "2023-Jul-1": "07/15/2023",
+            "2023-Jul-2": "07/31/2023",
+            "2023-Ago-1": "08/15/2023",
+            "2023-Ago-2": "08/31/2023",
+            "2023-Set-1": "09/15/2023",
+            "2023-Set-2": "09/30/2023",
+            "2023-Out-1": "10/15/2023",
+            "2023-Out-2": "10/31/2023",
+            "2023-Nov-1": "11/15/2023",
+            "2023-Nov-2": "11/30/2023",
+            "2023-Dez-1": "12/15/2023",
+            "2023-Dez-2": "12/31/2023",
+            "2024-Jan-1": "01/15/2024",
+            "2024-Jan-2": "01/31/2024",
+            "2024-Fev-1": "02/15/2024",
+            "2024-Fev-2": "02/29/2024",
+            "2024-Mar-1": "03/15/2024",
+            "2024-Mar-2": "03/31/2024",
+            "2024-Abr-1": "04/15/2024",
+            "2024-Abr-2": "04/30/2024",
+            "2024-Mai-1": "05/15/2024",
+            "2024-Mai-2": "05/31/2024",
+            "2024-Jun-1": "06/15/2024",
+            "2024-Jun-2": "06/30/2024",
+            "2024-Jul-1": "07/15/2024",
+            "2024-Jul-2": "07/31/2024",
+            "2024-Ago-1": "08/15/2024",
+            "2024-Ago-2": "08/31/2024",
+            "2024-Set-1": "09/15/2024",
+            "2024-Set-2": "09/30/2024",
+            "2024-Out-1": "10/15/2024",
+            "2024-Out-2": "10/31/2024",
+            "2024-Nov-1": "11/15/2024",
+            "2024-Nov-2": "11/30/2024",
+            "2024-Dez-1": "12/15/2024",
+            "2024-Dez-2": "12/31/2024",
         }
 
         final_date = map_months_period[dataframe["extraction_period"]]
-        dataframe["df"]["Extraction Range"] = final_date
+
+        dataframe["df"] = dataframe["df"].with_columns(
+            pl.lit(final_date).alias("Extraction Range")
+        )
         return dataframe
 
-    def convert_column_types(self, dataframe):
+    def convert_column_types(
+        self,
+        dataframe,
+    ):
         """
         Converte colunas específicas do DataFrame para o tipo de dado adequado.
 
@@ -260,7 +361,9 @@ class EtlLinkedinPolars:
         columns_to_convert.append("Extraction Range")
 
         for column in columns_to_convert:
-            dataframe["df"][column] = pd.to_datetime(dataframe["df"][column])
+            dataframe["df"] = dataframe["df"].with_columns(
+                pl.col(column).str.to_date("%m/%d/%Y")
+            )
 
         return dataframe
 
@@ -274,96 +377,122 @@ class EtlLinkedinPolars:
         Retorno:
         dict: O mesmo dicionário com os dados de métricas de conteúdo limpos.
         """
-        df = dataframe["df"][
-            [
-                "Date",
-                "Impressions",
-                "Clicks",
-                "Reactions",
-                "Comments",
-                "Shares",
-                "Engagement rate",
-                "Extraction Range",
-            ]
-        ]
+        df = dataframe["df"]
 
-        df["Reactions (positive)"] = df["Reactions"][df["Reactions"] >= 0]
-        df["Comments (positive)"] = df["Comments"][df["Comments"] >= 0]
-        df["Shares (positive)"] = df["Shares"][df["Shares"] >= 0]
-        df["Clicks (positive)"] = df["Clicks"][df["Clicks"] >= 0]
+        column_type = {
+            "Date": pl.String,  # temp
+            "Impressions (organic)": pl.Int32,
+            "Impressions (sponsored)": pl.Int32,
+            "Impressions (total)": pl.Int32,
+            "Unique impressions (organic)": pl.Int32,
+            "Clicks (organic)": pl.Int32,
+            "Clicks (sponsored)": pl.Int32,
+            "Clicks (total)": pl.Int32,
+            "Reactions (organic)": pl.Int32,
+            "Reactions (sponsored)": pl.Int32,
+            "Reactions (total)": pl.Int32,
+            "Comments (organic)": pl.Int32,
+            "Comments (sponsored)": pl.Int32,
+            "Comments (total)": pl.Int32,
+            "Shares (organic)": pl.Int32,
+            "Shares (sponsored)": pl.Int32,
+            "Shares (total)": pl.Int32,
+            "Engagement rate (organic)": pl.Float64,
+            "Engagement rate (sponsored)": pl.Float64,
+            "Engagement rate (total)": pl.Float64,
+        }
+        df = df.cast(column_type)
 
-        df["Reactions (positive)"] = df["Reactions (positive)"].fillna(0)
-        df["Comments (positive)"] = df["Comments (positive)"].fillna(0)
-        df["Shares (positive)"] = df["Shares (positive)"].fillna(0)
-        df["Clicks (positive)"] = df["Clicks (positive)"].fillna(0)
-
-        window = 3
-
-        df["Reactions (moving average)"] = (
-            df["Reactions (positive)"].rolling(window=window).mean()
-        )
-        df["Comments (moving average)"] = (
-            df["Comments (positive)"].rolling(window=window).mean()
-        )
-        df["Shares (moving average)"] = (
-            df["Shares (positive)"].rolling(window=window).mean()
-        )
-        df["Clicks (moving average)"] = (
-            df["Clicks (positive)"].rolling(window=window).mean()
-        )
-
-        df["Reactions"] = df.apply(
-            lambda row: (
-                row["Reactions (moving average)"]
-                if row["Reactions"] < 0
-                else row["Reactions"]
-            ),
-            axis=1,
+        df = df.with_columns(
+            pl.when(pl.col("Reactions (total)") >= 0)
+            .then(pl.col("Reactions (total)"))
+            .otherwise(pl.lit(0))
+            .alias("Reactions (positive)"),
+            pl.when(pl.col("Comments (total)") >= 0)
+            .then(pl.col("Comments (total)"))
+            .otherwise(pl.lit(0))
+            .alias("Comments (positive)"),
+            pl.when(pl.col("Shares (total)") >= 0)
+            .then(pl.col("Shares (total)"))
+            .otherwise(pl.lit(0))
+            .alias("Shares (positive)"),
+            pl.when(pl.col("Clicks (total)") >= 0)
+            .then(pl.col("Clicks (total)"))
+            .otherwise(pl.lit(0))
+            .alias("Clicks (positive)"),
         )
 
-        df["Comments"] = df.apply(
-            lambda row: (
-                row["Comments (moving average)"]
-                if row["Comments"] < 0
-                else row["Comments"]
-            ),
-            axis=1,
+        df = df.with_columns(
+            (pl.col("Reactions (positive)"))
+            .rolling_mean(window_size=3)
+            .alias("Reactions (moving average)"),
+            (pl.col("Comments (positive)"))
+            .rolling_mean(window_size=3)
+            .alias("Comments (moving average)"),
+            (pl.col("Shares (positive)"))
+            .rolling_mean(window_size=3)
+            .alias("Shares (moving average)"),
+            (pl.col("Clicks (positive)"))
+            .rolling_mean(window_size=3)
+            .alias("Clicks (moving average)"),
         )
 
-        df["Shares"] = df.apply(
-            lambda row: (
-                row["Shares (moving average)"] if row["Shares"] < 0 else row["Shares"]
-            ),
-            axis=1,
+        df = df.with_columns(
+            pl.when(pl.col("Reactions (total)") >= 0)
+            .then(pl.col("Reactions (total)"))
+            .otherwise("Reactions (moving average)")
+            .alias("Reactions (final)"),
+            pl.when(pl.col("Comments (total)") >= 0)
+            .then(pl.col("Comments (total)"))
+            .otherwise("Comments (moving average)")
+            .alias("Comments (final)"),
+            pl.when(pl.col("Shares (total)") >= 0)
+            .then(pl.col("Shares (total)"))
+            .otherwise("Shares (moving average)")
+            .alias("Shares (final)"),
+            pl.when(pl.col("Clicks (total)") >= 0)
+            .then(pl.col("Clicks (total)"))
+            .otherwise("Clicks (moving average)")
+            .alias("Clicks (final)"),
         )
 
-        df["Clicks"] = df.apply(
-            lambda row: (
-                row["Clicks (moving average)"] if row["Clicks"] < 0 else row["Clicks"]
-            ),
-            axis=1,
+        engagement_sum = (
+            pl.col("Reactions (final)")
+            + pl.col("Comments (final)")
+            + pl.col("Clicks (final)")
+            + pl.col("Shares (final)")
         )
 
-        df["Engagement Rate"] = df.apply(
-            lambda row: (
-                row["Reactions"] + row["Comments"] + row["Clicks"] + row["Shares"]
+        df = df.with_columns(
+            (engagement_sum / pl.col("Impressions (total)")).alias(
+                "Engagement rate (calculed)"
             )
-            / row["Impressions"],
-            axis=1,
         )
 
-        dataframe["df"] = df[
+        df_final = df.select(
             [
                 "Date",
-                "Impressions",
-                "Clicks",
-                "Reactions",
-                "Comments",
-                "Shares",
-                "Engagement Rate",
+                "Impressions (total)",
+                "Reactions (final)",
+                "Comments (final)",
+                "Clicks (final)",
+                "Shares (final)",
+                "Engagement rate (calculed)",
                 "Extraction Range",
             ]
+        )
+        df_final.columns = [
+            "Date",
+            "Impressions (total)",
+            "Reactions (total)",
+            "Comments (total)",
+            "Clicks (total)",
+            "Shares (total)",
+            "Engagement Rate (total)",
+            "Extraction Range",
         ]
+
+        dataframe["df"] = df_final
 
         return dataframe
 
@@ -377,354 +506,165 @@ class EtlLinkedinPolars:
         Retorno:
         list: Lista de dicionários contendo os dados transformados.
         """
-        category_atributes = {
-            "content_metrics": {
-                "Date": pl.String,  # temp
-                "Impressions (organic)": pl.Int32,
-                "Impressions (sponsored)": pl.Int32,
-                "Impressions (total)": pl.Int32,
-                "Unique impressions (organic)": pl.Int32,
-                "Clicks (organic)": pl.Int32,
-                "Clicks (sponsored)": pl.Int32,
-                "Clicks (total)": pl.Int32,
-                "Reactions (organic)": pl.Int32,
-                "Reactions (sponsored)": pl.Int32,
-                "Reactions (total)": pl.Int32,
-                "Comments (organic)": pl.Int32,
-                "Comments (sponsored)": pl.Int32,
-                "Comments (total)": pl.Int32,
-                "Shares (organic)": pl.Int32,
-                "Shares (sponsored)": pl.Int32,
-                "Shares (total)": pl.Int32,
-                "Engagement rate (organic)": pl.Float64,
-                "Engagement rate (sponsored)": pl.Float64,
-                "Engagement rate (total)": pl.Float64,
-            },
-            "content_posts": {
-                "Post Title": pl.String,
-                "Post Link": pl.String,
-                "Post Type": pl.String,
-                "Campaign Name": pl.String,
-                "Published by": pl.String,
-                "Date": pl.String,  # temp
-                "Campaign Start Date": pl.String,  # temp
-                "Campaign End Date": pl.String,  # temp
-                "Audience": pl.String,
-                "Impressions": pl.Int32,
-                "Views (excluding off-site video views)": pl.Int32,
-                "Off-site Views": pl.Int32,
-                "Clicks": pl.Int32,
-                "Click-Through Rate (CTR)": pl.Float32,
-                "Likes": pl.Int32,
-                "Comments": pl.Int32,
-                "Shares": pl.Int32,
-                "Followers": pl.Int32,
-                "Engagement Rate": pl.Float32,
-                "Content Type": pl.String,
-            },
-            "followers_new": {
-                "Date": pl.String,  # temp
-                "Followers Sponsored": pl.Int32,
-                "Followers Organic": pl.Int32,
-                "Total Followers": pl.Int32,
-            },
-            "followers_location": {"Location": pl.String, "Total Followers": pl.Int32},
-            "followers_function": {"Function": pl.String, "Total Followers": pl.Int32},
-            "followers_experience": {
-                "Experience Level": pl.String,
-                "Total Followers": pl.Int32,
-            },
-            "followers_industry": {"Industry": pl.String, "Total Followers": pl.Int32},
-            "followers_company_size": {
-                "Company Size": pl.String,
-                "Total Followers": pl.Int32,
-            },
-            "visitors_metrics": {
-                "Date": pl.String,  # temp
-                "Page Views Overview (Desktop)": pl.Int32,
-                "Page Views Overview (Mobile Devices)": pl.Int32,
-                "Page Views Overview (Total)": pl.Int32,
-                "Unique Visitors Overview (Desktop)": pl.Int32,
-                "Unique Visitors Overview (Mobile Devices)": pl.Int32,
-                "Unique Visitors Overview (Total)": pl.Int32,
-                "Page Views Day by Day (Desktop)": pl.Int32,
-                "Page Views Day by Day (Mobile Devices)": pl.Int32,
-                "Page Views Day by Day (Total)": pl.Int32,
-                "Unique Visitors Day by Day (Desktop)": pl.Int32,
-                "Unique Visitors Day by Day (Mobile Devices)": pl.Int32,
-                "Unique Visitors Day by Day (Total)": pl.Int32,
-                "Page Views Jobs (Desktop)": pl.Int32,
-                "Page Views Jobs (Mobile Devices)": pl.Int32,
-                "Page Views Jobs (Total)": pl.Int32,
-                "Unique Visitors Jobs (Desktop)": pl.Int32,
-                "Unique Visitors Jobs (Mobile Devices)": pl.Int32,
-                "Unique Visitors Jobs (Total)": pl.Int32,
-                "Total Page Views (Desktop)": pl.Int32,
-                "Total Page Views (Mobile Devices)": pl.Int32,
-                "Total Page Views (Total)": pl.Int32,
-                "Total Unique Visitors (Desktop)": pl.Int32,
-                "Total Unique Visitors (Mobile Devices)": pl.Int32,
-                "Total Unique Visitors (Total)": pl.Int32,
-            },
-            "visitors_location": {"Location": pl.String, "Total Views": pl.Int32},
-            "visitors_function": {"Function": pl.String, "Total Views": pl.Int32},
-            "visitors_experience": {
-                "Experience Level": pl.String,
-                "Total Views": pl.Int32,
-            },
-            "visitors_industry": {"Industry": pl.String, "Total Views": pl.Int32},
-            "visitors_company_size": {
-                "Company Size": pl.String,
-                "Total Views": pl.Int32,
-            },
-            "competitor": {
-                "Page": pl.String,
-                "Total Followers": pl.Int32,
-                "New Followers": pl.Int32,
-                "Total Post Engagements": pl.Float32,
-                "Total Posts": pl.Int32,
-            },
-        }
-
         for dataframe in data:
-            print(dataframe["dataframe_name"])
-            dataframe = self.translate_cols(
-                dataframe,
-                translated_columns=list(
-                    category_atributes.get(dataframe["dataframe_name"]).keys()
-                ),
-            )
-            # dataframe = self.add_final_date(dataframe)
-            # dataframe = self.convert_column_types(dataframe)
-            # if dataframe["dataframe_name"] == "content_metrics":
-            #     dataframe = self.clean_content_metrics_data(dataframe)
+            dataframe = self.translate_cols(dataframe)
+            dataframe = self.add_final_date(dataframe)
+            dataframe = self.convert_column_types(dataframe)
+            if dataframe["dataframe_name"] == "content_metrics":
+                dataframe = self.clean_content_metrics_data(dataframe)
 
         return data
 
-    # def load_to_clean(self, data):
-    #     """
-    #     Carrega os dados transformados no diretório de dados limpos.
+    def load_to_clean(self, data):
+        """
+        Carrega os dados transformados no diretório de dados limpos.
 
-    #     Parâmetros:
-    #     data (list): Lista de dicionários contendo os dados transformados.
+        Parâmetros:
+        data (list): Lista de dicionários contendo os dados transformados.
 
-    #     Retorno:
-    #     int: Retorna 1 se a carga for bem-sucedida.
-    #     """
-    #     for dataframe in data:
-    #         dir_export = dataframe["dir"].replace("raw", "clean")
-    #         if not os.path.exists(dir_export):
-    #             os.makedirs(dir_export)
+        Retorno:
+        int: Retorna 1 se a carga for bem-sucedida.
+        """
+        for dataframe in data:
+            dir_export = dataframe["dir"].replace("raw", "clean")
+            if not os.path.exists(dir_export):
+                os.makedirs(dir_export)
 
-    #         export_filename = (
-    #             dataframe["dataframe_name"]
-    #             + "_"
-    #             + dataframe["extraction_period"].split("-")[-1]
-    #             + ".csv"
-    #         )
+            export_filename = (
+                dataframe["dataframe_name"]
+                + "_"
+                + dataframe["extraction_period"].split("-")[-1]
+                + ".csv"
+            )
 
-    #         dataframe["df"].to_csv(
-    #             os.path.join(dir_export, export_filename),
-    #             index=False,
-    #             quoting=csv.QUOTE_ALL,
-    #         )
+            dataframe["df"].write_csv(
+                os.path.join(dir_export, export_filename),
+                quote_style="always",
+                # index=False,
+                # quoting=csv.QUOTE_ALL,
+            )
 
-    #     return 1
+        return 1
 
-    # def read_clean_months(self, clean_directory):
-    #     """
-    #     Detecta e retorna uma lista de arquivos limpos a serem concatenados.
+    def concatenate_monthly_dataframes(self, data):
+        """
+        Agrupa e concatena os DataFrames extraídos por mês.
 
-    #     Parâmetros:
-    #     clean_directory (str): Diretório contendo os dados limpos.
+        Parâmetros:
+        data (list): Lista de dicionários contendo os dados extraídos.
 
-    #     Retorno:
-    #     dict: Dicionário de listas de arquivos a serem concatenados, organizados por categoria.
-    #     """
-    #     files_to_concat = {
-    #         "competitor": [],
-    #         "content_metrics": [],
-    #         "content_posts": [],
-    #         "followers_new": [],
-    #         "followers_location": [],
-    #         "followers_function": [],
-    #         "followers_experience": [],
-    #         "followers_industry": [],
-    #         "followers_company_size": [],
-    #         "visitors_metrics": [],
-    #         "visitors_location": [],
-    #         "visitors_function": [],
-    #         "visitors_experience": [],
-    #         "visitors_industry": [],
-    #         "visitors_company_size": [],
-    #     }
+        Retorno:
+        dict: Dicionário com os DataFrames concatenados, categoria e diretório de saída.
+        """
+        grouped_data_month = {}
 
-    #     for category in os.listdir(clean_directory):
-    #         category_path = os.path.join(clean_directory, category)
+        for dataframe in data:
+            year_month = "_".join(dataframe["extraction_period"].split("-")[:2])
+            tag_month = f"{year_month}_{dataframe['dataframe_name']}"
 
-    #         for year in os.listdir(category_path):
+            if tag_month not in grouped_data_month:
+                grouped_data_month[tag_month] = {
+                    "category": dataframe["dataframe_name"],
+                    "export_dir": dataframe["dir"].replace("raw", "clean"),
+                    "dfs": [],
+                }
 
-    #             year_path = os.path.join(category_path, year)
+            grouped_data_month[tag_month]["dfs"].append(dataframe["df"])
 
-    #             for month in os.listdir(year_path):
+        for tag_month, grouped_data in grouped_data_month.items():
+            grouped_data_month[tag_month]["concatenated_df"] = pl.concat(
+                grouped_data["dfs"]
+            )
 
-    #                 month_path = os.path.join(year_path, month)
+        return grouped_data_month
 
-    #                 monthly_files = os.listdir(month_path)
+    def export_dataframes(self, data, file_prefix):
+        """
+        Exporta dataframes concatenados para um arquivo CSV.
 
-    #                 if not monthly_files:
+        Parâmetros:
+        data (dict): Dicionário com os DataFrames concatenados.
+        file_prefix (str): Tipo de exportação (e.g., 'month', 'clean').
 
-    #                     continue
+        Retorno:
+        int: Retorna 1 se a exportação for bem-sucedida.
+        """
+        for key, dataframe in data.items():
+            export_dir = dataframe["export_dir"]
+            export_filename = f"{file_prefix}_{dataframe['category']}.csv"
 
-    #                 for file in monthly_files:
-    #                     if file.startswith("month_"):
-    #                         file_category = file[6:-4]
-    #                         files_to_concat[file_category].append(
-    #                             os.path.join(month_path, file)
-    #                         )
+            if os.path.exists(export_dir) == False:
+                os.makedirs(export_dir)
 
-    #     return files_to_concat
+            full_path = os.path.join(export_dir, export_filename)
+            # dataframe["concatenated_df"].to_csv(
+            #     full_path, index=False, quoting=csv.QUOTE_ALL
+            # )
+            dataframe["concatenated_df"].write_csv(full_path, quote_style="always")
+        return 1
 
-    # def concatenate_dataframes(self, files):
-    #     """
-    #     Concatena uma lista de arquivos CSV em um único DataFrame.
+    def concatenate_category_dataframes(self, data):
+        """
+        Concatena todos os arquivos concatenados mensalmente em arquivos únicos por categoria.
 
-    #     Parâmetros:
-    #     files (list): Lista de caminhos para os arquivos CSV.
+        Parâmetros:
+        clean_data (dict): Dicionário de listas de arquivos mensais limpos a serem concatenados.
 
-    #     Retorno:
-    #     DataFrame: DataFrame concatenado.
-    #     """
-    #     dataframes = [pd.read_csv(file) for file in files]
-    #     concatenated_df = pd.concat(dataframes, ignore_index=True)
-    #     return concatenated_df
+        Retorno:
+        int: Retorna 1 se a concatenação for bem-sucedida.
+        """
+        grouped_data_category = {}
 
-    # def export_concatenated_df(self, df, category, output_directory, export_type):
-    #     """
-    #     Exporta um DataFrame concatenado para um arquivo CSV.
+        for key, dataframe in data.items():
+            if dataframe["category"] not in grouped_data_category:
+                grouped_data_category[dataframe["category"]] = {
+                    "category": dataframe["category"],
+                    "export_dir": re.sub(
+                        r"(clean)[\\/].*",
+                        r"\1/concatenated_dataframes",
+                        dataframe["export_dir"],
+                    ),
+                    "dfs": [],
+                }
 
-    #     Parâmetros:
-    #     df (DataFrame): DataFrame a ser exportado.
-    #     category (str): Categoria do DataFrame.
-    #     output_directory (str): Diretório de saída para o arquivo CSV.
-    #     export_type (str): Tipo de exportação (e.g., 'month', 'clean').
+            grouped_data_category[dataframe["category"]]["dfs"].append(
+                dataframe["concatenated_df"]
+            )
 
-    #     Retorno:
-    #     int: Retorna 1 se a exportação for bem-sucedida.
-    #     """
-    #     if os.path.exists(output_directory) == False:
-    #         os.makedirs(output_directory)
+        for category, grouped_data in grouped_data_category.items():
+            grouped_data_category[category]["concatenated_df"] = pl.concat(
+                grouped_data["dfs"]
+            )
 
-    #     full_path = os.path.join(output_directory, f"{export_type}_{category}.csv")
-    #     df.to_csv(full_path, index=False, quoting=csv.QUOTE_ALL)
-    #     return 1
+        return grouped_data_category
 
-    # def concatenate_monthly_files(self, clean_directory):
-    #     """
-    #     Concatena os arquivos mensais limpos em arquivos únicos por categoria.
 
-    #     Parâmetros:
-    #     clean_directory (str): Diretório contendo os dados limpos.
-
-    #     Retorno:
-    #     int: Retorna 1 se a concatenação for bem-sucedida.
-    #     """
-    #     category_keys = {
-    #         "Concorrentes": ["competitor"],
-    #         "Conteúdo": ["content_metrics", "content_posts"],
-    #         "Seguidores": [
-    #             "followers_new",
-    #             "followers_location",
-    #             "followers_function",
-    #             "followers_experience",
-    #             "followers_industry",
-    #             "followers_company_size",
-    #         ],
-    #         "Visitantes": [
-    #             "visitors_metrics",
-    #             "visitors_location",
-    #             "visitors_function",
-    #             "visitors_experience",
-    #             "visitors_industry",
-    #             "visitors_company_size",
-    #         ],
-    #     }
-
-    #     for category in os.listdir(clean_directory):
-
-    #         category_path = os.path.join(clean_directory, category)
-
-    #         for year in os.listdir(category_path):
-
-    #             year_path = os.path.join(category_path, year)
-
-    #             for month in os.listdir(year_path):
-
-    #                 path_month = os.path.join(year_path, month)
-
-    #                 monthly_files = os.listdir(path_month)
-
-    #                 if not monthly_files:
-
-    #                     continue
-
-    #                 category_files = category_keys[category]
-    #                 for category_file in category_files:
-    #                     files_to_process = [
-    #                         os.path.join(path_month, file)
-    #                         for file in os.listdir(path_month)
-    #                         if file.startswith(category_file)
-    #                     ]
-    #                     concatenated_df = self.concatenate_dataframes(files_to_process)
-    #                     self.export_concatenated_df(
-    #                         df=concatenated_df,
-    #                         category=category_file,
-    #                         output_directory=path_month,
-    #                         export_type="month",
-    #                     )
-    #     return 1
-
-    # def concatenate_all_periods(self, clean_data):
-        # """
-        # Concatena todos os arquivos concatenados mensalmente em arquivos únicos por categoria.
-
-        # Parâmetros:
-        # clean_data (dict): Dicionário de listas de arquivos mensais limpos a serem concatenados.
-
-        # Retorno:
-        # int: Retorna 1 se a concatenação for bem-sucedida.
-        # """
-        # for category, files in clean_data.items():
-        #     concatenated_df = self.concatenate_dataframes(files)
-
-        #     split_path = files[0].split("clean")
-        #     category_file = split_path[1].split("\\")[-1][6:-4]
-        #     final_path = os.path.join(split_path[0], "clean", "Concatenated")
-
-        #     self.export_concatenated_df(
-        #         df=concatenated_df,
-        #         category=category_file,
-        #         output_directory=final_path,
-        #         export_type="clean",
-        #     )
-
-        # return 1
-    
 def main():
-    
+
     raw_directory = "data/linkedin/raw"
     clean_directory = "data/linkedin/clean"
 
     etl = EtlLinkedinPolars(raw_directory, clean_directory)
     data = etl.extract_data()
-
     data = etl.transform_data(data)
-    # etl.load_to_clean(data)
+    etl.load_to_clean(data)
 
-    # etl.concatenate_monthly_files(clean_directory)
+    concatenated_monthly_dataframes = etl.concatenate_monthly_dataframes(data)
+    etl.export_dataframes(concatenated_monthly_dataframes, file_prefix="month")
 
-    # months_data = etl.read_clean_months(clean_directory)
-    # etl.concatenate_all_periods(months_data)
+    concatenated_category_dataframes = etl.concatenate_category_dataframes(
+        concatenated_monthly_dataframes
+    )
+    etl.export_dataframes(
+        concatenated_category_dataframes, file_prefix="all_extractions"
+    )
+
 
 if __name__ == "__main__":
+    # debug
+    # delete clean_dir
+    import shutil
+
+    shutil.rmtree("data/linkedin/clean")
+
     main()
