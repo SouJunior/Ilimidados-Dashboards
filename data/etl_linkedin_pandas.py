@@ -612,8 +612,6 @@ def main():
     raw_directory = "data/linkedin/raw"
     clean_directory = "data/linkedin/clean"
 
-    # temp
-    # delete clean directory
     etl = EtlLinkedin(raw_directory, clean_directory)
     data = etl.extract_data()
     data = etl.transform_data(data)
