@@ -152,22 +152,27 @@ class EtlLinkedin:
         """
 
         files = self.get_raw_files(self.raw_directory)
-        print(f"Lendo {len(files)} arquivos...")
 
         data = [obj for file in files for obj in self.read_excel_file(file)]
-        print(f"Encontrado {len(data)} tabelas...")
         return data
 
-    def convert_pandas_to_duck(self, data):
+    def convert_dataframes_to_duckdb(self, data):
+        """
+        Converte dataframes pandas para tabelas em DuckDB.
+
+        Parâmetros:
+        data (list): Lista de dicionários contendo os dados extraídos.
+
+        Retorno:
+        tables: lista de dicionários contendo dados das tabelas.
+        """
         tables = []
         for dataframe in data:
-            table_dict = self.load_data_from_pandas(dataframe)
+            table_dict = self.register_dataframe_in_duckdb(dataframe)
             tables.append(table_dict)
-            # if dataframe["dataframe_name"] == "content_metrics":
-            #     self.process_content_metrics(table_name)
         return tables
 
-    def load_data_from_pandas(self, dataframe):
+    def register_dataframe_in_duckdb(self, dataframe):
         table_attributes = {
             "content_metrics": {
                 "Date": "DATE",  # inferir data diretamente
@@ -311,8 +316,15 @@ class EtlLinkedin:
         return table_dict
 
     def process_content_metrics(self, table):
-        # TODO: DOCSTRING
-        # Criar uma tabela temporária auxiliar
+        """
+        Processa a tabela conteúdo_métrica.
+
+        Parâmetros:
+        table (str): Nome da tabela a ser processada.
+
+        Retorno:
+        int: Retorna 1 se o processamento for bem-sucedido.
+        """
 
         self.con.execute(
             f"""
@@ -413,11 +425,10 @@ class EtlLinkedin:
 
     def add_final_date(self, table):
         """
-        TODO: docstrings
-        Adiciona uma data final ao DataFrame com base no período de extração.
+        Adiciona uma data final a tabela com base no período de extração.
 
         Parâmetros:
-        dataframe (dict): Dicionário contendo o DataFrame e suas informações.
+        table: Dicionário contendo o informações da tabela.
 
         Retorno:
         dict: O mesmo dicionário com a data final adicionada.
@@ -489,11 +500,10 @@ class EtlLinkedin:
 
     def transform_data(self, tables):
         """
-        TODO: Docstring
         Aplica uma série de transformações aos dados extraídos.
 
         Parâmetros:
-        data (list): Lista de dicionários contendo os dados extraídos.
+        tables (list): Lista de dicionários contendo os dados extraídos.
 
         Retorno:
         list: Lista de dicionários contendo os dados transformados.
@@ -507,11 +517,10 @@ class EtlLinkedin:
 
     def load_to_clean(self, tables):
         """
-        TODO: docstrings
         Carrega os dados transformados no diretório de dados limpos.
 
         Parâmetros:
-        data (list): Lista de dicionários contendo os dados transformados.
+        tables (list): Lista de dicionários contendo os dados transformados.
 
         Retorno:
         int: Retorna 1 se a carga for bem-sucedida.
@@ -529,14 +538,13 @@ class EtlLinkedin:
 
     def concatenate_monthly_tables(self, tables):
         """
-        TODO: DOCSTRINGS
-        Detecta e retorna uma lista de arquivos limpos a serem concatenados.
+        Identifica e agrupa tabelas de mesma categoria e mesmo mês em uma lista.
 
         Parâmetros:
-        clean_directory (str): Diretório contendo os dados limpos.
+        tables (list): Lista de dicionários contendo os dados transformados.
 
         Retorno:
-        dict: Dicionário de listas de arquivos a serem concatenados, organizados por categoria.
+        dict: Dicionário de listas de arquivos a serem concatenados, organizados por categoria e mês.
         """
         monthly_data = {}
 
@@ -571,13 +579,10 @@ class EtlLinkedin:
 
     def export_tables(self, tables, export_type):
         """
-        TODO: DOCSTRINGS
         Exporta um DataFrame concatenado para um arquivo CSV.
 
         Parâmetros:
-        df (DataFrame): DataFrame a ser exportado.
-        category (str): Categoria do DataFrame.
-        output_directory (str): Diretório de saída para o arquivo CSV.
+        tables (dict): Dicionário contendo as tabelas a serem exportadas.
         export_type (str): Tipo de exportação (e.g., 'month', 'clean').
 
         Retorno:
@@ -596,14 +601,13 @@ class EtlLinkedin:
 
     def concatenate_category_tables(self, monthly_data):
         """
-        TODO:DOCSTRINGS
-        Concatena todos os arquivos concatenados mensalmente em arquivos únicos por categoria.
+        Identifica e agrupa tabelas de mesma categoria.
 
         Parâmetros:
-        clean_data (dict): Dicionário de listas de arquivos mensais limpos a serem concatenados.
+        monthly_data (dict): Dicionário de listas de arquivos mensais limpos a serem concatenados.
 
         Retorno:
-        int: Retorna 1 se a concatenação for bem-sucedida.
+        dict: Dicionário contendo os dados agrupados por categoria.
         """
         monthly_data_t = {
             "competitor_2023_Ago": {
@@ -633,14 +637,12 @@ class EtlLinkedin:
         for category, grouped_data in grouped_data_category.items():
             table_name = category
 
-            # Construir a consulta SQL dinamicamente
             union_all_query = ""
             for table in grouped_data["tables"]:
                 union_all_query += f'SELECT * FROM "{table}" UNION ALL '
 
             union_all_query = union_all_query.rstrip(" UNION ALL ")
 
-            # Executar a consulta
             self.con.execute(
                 f"""
                 CREATE OR REPLACE TABLE "{table_name}" AS
@@ -650,14 +652,13 @@ class EtlLinkedin:
 
         return grouped_data_category
 
-
 def main():
     raw_directory = "data/linkedin/raw"
     clean_directory = "data/linkedin/clean"
 
     etl = EtlLinkedin(raw_directory, clean_directory)
     pandas_dataframes = etl.extract_data()
-    tables = etl.convert_pandas_to_duck(pandas_dataframes)
+    tables = etl.convert_dataframes_to_duckdb(pandas_dataframes)
     etl.transform_data(tables)
     etl.load_to_clean(tables)
 
@@ -669,10 +670,10 @@ def main():
 
 
 if __name__ == "__main__":
-    # temp
+    # temp - debug
     # delete clean_dir
     import shutil
-
     if os.path.exists("data/linkedin/clean"):
         shutil.rmtree("data/linkedin/clean")
+
     main()
