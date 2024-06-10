@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import duckdb
 import re
+import calendar
 
 import warnings
 import logging
@@ -433,58 +434,33 @@ class EtlLinkedin:
         Retorno:
         dict: O mesmo dicionário com a data final adicionada.
         """
-        map_months_period = {
-            "2023_Jan_1": "2023-01-15",
-            "2023_Jan_2": "2023-01-31",
-            "2023_Fev_1": "2023-02-15",
-            "2023_Fev_2": "2023-02-28",
-            "2023_Mar_1": "2023-03-15",
-            "2023_Mar_2": "2023-03-31",
-            "2023_Abr_1": "2023-04-15",
-            "2023_Abr_2": "2023-04-30",
-            "2023_Maio_1": "2023-05-15",
-            "2023_Maio_2": "2023-05-31",
-            "2023_Jun_1": "2023-06-15",
-            "2023_Jun_2": "2023-06-30",
-            "2023_Jul_1": "2023-07-15",
-            "2023_Jul_2": "2023-07-31",
-            "2023_Ago_1": "2023-08-15",
-            "2023_Ago_2": "2023-08-31",
-            "2023_Set_1": "2023-09-15",
-            "2023_Set_2": "2023-09-30",
-            "2023_Out_1": "2023-10-15",
-            "2023_Out_2": "2023-10-31",
-            "2023_Nov_1": "2023-11-15",
-            "2023_Nov_2": "2023-11-30",
-            "2023_Dez_1": "2023-12-15",
-            "2023_Dez_2": "2023-12-31",
-            "2024_Jan_1": "2024-01-15",
-            "2024_Jan_2": "2024-01-31",
-            "2024_Fev_1": "2024-02-15",
-            "2024_Fev_2": "2024-02-29",
-            "2024_Mar_1": "2024-03-15",
-            "2024_Mar_2": "2024-03-31",
-            "2024_Abr_1": "2024-04-15",
-            "2024_Abr_2": "2024-04-30",
-            "2024_Maio_1": "2024-05-15",
-            "2024_Maio_2": "2024-05-31",
-            "2024_Jun_1": "2024-06-15",
-            "2024_Jun_2": "2024-06-30",
-            "2024_Jul_1": "2024-07-15",
-            "2024_Jul_2": "2024-07-31",
-            "2024_Ago_1": "2024-08-15",
-            "2024_Ago_2": "2024-08-31",
-            "2024_Set_1": "2024-09-15",
-            "2024_Set_2": "2024-09-30",
-            "2024_Out_1": "2024-10-15",
-            "2024_Out_2": "2024-10-31",
-            "2024_Nov_1": "2024-11-15",
-            "2024_Nov_2": "2024-11-30",
-            "2024_Dez_1": "2024-12-15",
-            "2024_Dez_2": "2024-12-31",
-        }
 
-        final_date = map_months_period[table["extraction_period"]]
+        extraction_period = table["extraction_period"]
+        year, month, period = extraction_period.split("_")
+
+        month_order_pt = {
+            "Jan": 1,
+            "Fev": 2,
+            "Mar": 3,
+            "Abr": 4,
+            "Maio": 5,
+            "Jun": 6,
+            "Jul": 7,
+            "Ago": 8,
+            "Set": 9,
+            "Out": 10,
+            "Nov": 11,
+            "Dez": 12,
+        }
+        month = month_order_pt[month]
+
+        if period == "2":
+            day = calendar.monthrange(int(year), int(month))[1]
+        else:
+            day = 15
+
+        final_date = f"{year}-{month}-{day}"
+
         self.con.execute(
             f"""
             ALTER TABLE {table["db_table_name"]} ADD COLUMN IF NOT EXISTS "Extraction Range" DATE
@@ -652,6 +628,7 @@ class EtlLinkedin:
 
         return grouped_data_category
 
+
 def main():
     raw_directory = "data/linkedin/raw"
     clean_directory = "data/linkedin/clean"
@@ -673,6 +650,7 @@ if __name__ == "__main__":
     # temp - debug
     # delete clean_dir
     import shutil
+
     if os.path.exists("data/linkedin/clean"):
         shutil.rmtree("data/linkedin/clean")
 

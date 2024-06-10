@@ -1,6 +1,7 @@
 import polars as pl
 import os
 import re
+import calendar
 
 # import warnings
 
@@ -279,58 +280,31 @@ class EtlLinkedinPolars:
         Retorno:
         dict: O mesmo dicionário com a data final adicionada.
         """
-        map_months_period = {
-            "2023-Jan-1": "01/15/2023",
-            "2023-Jan-2": "01/31/2023",
-            "2023-Fev-1": "02/15/2023",
-            "2023-Fev-2": "02/28/2023",
-            "2023-Mar-1": "03/15/2023",
-            "2023-Mar-2": "03/31/2023",
-            "2023-Abr-1": "04/15/2023",
-            "2023-Abr-2": "04/30/2023",
-            "2023-Maio-1": "05/15/2023",
-            "2023-Maio-2": "05/31/2023",
-            "2023-Jun-1": "06/15/2023",
-            "2023-Jun-2": "06/30/2023",
-            "2023-Jul-1": "07/15/2023",
-            "2023-Jul-2": "07/31/2023",
-            "2023-Ago-1": "08/15/2023",
-            "2023-Ago-2": "08/31/2023",
-            "2023-Set-1": "09/15/2023",
-            "2023-Set-2": "09/30/2023",
-            "2023-Out-1": "10/15/2023",
-            "2023-Out-2": "10/31/2023",
-            "2023-Nov-1": "11/15/2023",
-            "2023-Nov-2": "11/30/2023",
-            "2023-Dez-1": "12/15/2023",
-            "2023-Dez-2": "12/31/2023",
-            "2024-Jan-1": "01/15/2024",
-            "2024-Jan-2": "01/31/2024",
-            "2024-Fev-1": "02/15/2024",
-            "2024-Fev-2": "02/29/2024",
-            "2024-Mar-1": "03/15/2024",
-            "2024-Mar-2": "03/31/2024",
-            "2024-Abr-1": "04/15/2024",
-            "2024-Abr-2": "04/30/2024",
-            "2024-Maio-1": "05/15/2024",
-            "2024-Maio-2": "05/31/2024",
-            "2024-Jun-1": "06/15/2024",
-            "2024-Jun-2": "06/30/2024",
-            "2024-Jul-1": "07/15/2024",
-            "2024-Jul-2": "07/31/2024",
-            "2024-Ago-1": "08/15/2024",
-            "2024-Ago-2": "08/31/2024",
-            "2024-Set-1": "09/15/2024",
-            "2024-Set-2": "09/30/2024",
-            "2024-Out-1": "10/15/2024",
-            "2024-Out-2": "10/31/2024",
-            "2024-Nov-1": "11/15/2024",
-            "2024-Nov-2": "11/30/2024",
-            "2024-Dez-1": "12/15/2024",
-            "2024-Dez-2": "12/31/2024",
-        }
+        extraction_period = dataframe["extraction_period"]
+        year, month, period = extraction_period.split("-")
 
-        final_date = map_months_period[dataframe["extraction_period"]]
+        month_order_pt = {
+            "Jan": 1,
+            "Fev": 2,
+            "Mar": 3,
+            "Abr": 4,
+            "Maio": 5,
+            "Jun": 6,
+            "Jul": 7,
+            "Ago": 8,
+            "Set": 9,
+            "Out": 10,
+            "Nov": 11,
+            "Dez": 12,
+        }
+        month = month_order_pt[month]
+
+        if period == "2":
+            day = calendar.monthrange(int(year), int(month))[1]
+        else:
+            day = 15
+
+        final_date = f"{month}/{day}/{year}"
 
         dataframe["df"] = dataframe["df"].with_columns(
             pl.lit(final_date).alias("Extraction Range")
@@ -664,7 +638,7 @@ if __name__ == "__main__":
     # debug
     # delete clean_dir
     import shutil
-
-    shutil.rmtree("data/linkedin/clean")
+    if os.path.exists("data/linkedin/clean"):
+        shutil.rmtree("data/linkedin/clean")
 
     main()
