@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import csv
+from datetime import datetime
 
 import warnings
 
@@ -18,7 +19,10 @@ class EtlLinkedin:
         self.last_date = None  # O valor é atribuido durante o loop de limpeza e utilizado em transform_data, caso a tabela não tenha a medida de tempo
 
     def mass_etl(self, extractions_dates: list):
-        self.clear_output()  # Temporário, processar dados passando uma lista de extrações enquanto não houver validação do mentor
+        # Temporário, processar dados passando uma lista de extrações enquanto não houver validação do mentor
+        
+        # Limpando pasta de saída
+        self.clear_output()  
 
         for folder_date in extractions_dates:
             self.process_data(folder_date)
@@ -408,5 +412,9 @@ class EtlLinkedin:
 
 
 if __name__ == "__main__":
+    start_time = datetime.now()
     etl = EtlLinkedin()
-    etl.mass_etl(["01_23-01_24", "03_23-03_24", "04_23-04_24"])
+    extraction_folders = os.listdir(etl.path_etl)
+    etl.mass_etl(extraction_folders)
+    total_time = datetime.now() - start_time
+    print("Total time:", total_time)
