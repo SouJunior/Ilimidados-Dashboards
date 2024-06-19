@@ -1,30 +1,36 @@
-# Ilimidados-Dashboards-WebScraping
+# Ilimidados-Dashboards-Etl
 
-Este é um projeto Python que realiza a extração de relatórios de estatísticas da página SouJunior no Linkedin.
+Este é um projeto Python que realiza o tratamento dos arquivos brutos extraídos do linkedin para o formato .csv para ser consumido pelo BI
 
-## Estrutura do Projeto
+## Como utilizar
 
-- `linkedin`: Contém o módulo `webscraping_linkedin.py` que define a classe `ScraperLinkedin`, o arquivo `etl_linkedin.ipynb` que contém o fluxo de testes para o script de etl, a pasta `data` com a estrutura de dados extraídos crús e tratados.
-- `selenium_env_tests`: Contém os testes de inicialização e de download de driver do Selenium.
-- `app.py`: Arquivo principal que executa o fluxo do projeto.
 
-## Requisitos
+- Faça o download e extração do conteúdo do repositorio
+- Crie um ambiente virtual
 
-- Python 3.6 ou superior
-- Bibliotecas: `selenium` e `webdriver-manager`
+```bash
+python -m venv .venv
+```
 
-## Configuração
+- Ative o ambiente virtual
 
-1. Clone o repositório no seu diretório de trabalho.
-2. Instale as dependências executando `pip install -r requirements.txt`
-3. Configure as variáveis de ambiente:
+```bash
+.venv/scripts/activate       
+```
 
-    ```bash
-    LINKEDIN_EMAIL="email"
-    LINKEDIN_PASSWORD="password"
-    LINKEDIN_COMPANY_CODE="company_code"
-    ```
+- Instale as dependências
+  
+```bash
+pip install -r requirements.txt
+```
 
-## Uso
+- Execute o script uma primeira vez para criar as estruturas de pastas
 
-Execute o script `app.py` para realizar o download dos relatórios.
+```bash
+python app.py
+```
+
+- Coloque os arquivos de extrações em pastas agrupadas por range de extração em `linkedin/data/raw/365d`
+- Execute o script novamente para realizar a transformação dos arquivos em .csv
+
+> Arquivos processados estarão disponiveis em: ´linkedin/data/processed´
